@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Documentation</title>
+      <meta charset=utf-8>
+      <meta name=viewport content="width=device-width, initial-scale=1">
+      <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css>
+      <link rel="stylesheet" href="https://7050356.app.netsuite.com/core/media/media.nl?id=2759&c=7050356&h=goQdBaHzQdUGcr5Yl2Z7vd9XovAv9sBI2y73lClYHW3geHXZ&_xt=.css">
+      <link href="https://fonts.googleapis.com/css2?family=Fira+Code&amp;family=Roboto:wght@300;400;500&amp;display=swap" rel=stylesheet>
+      <script src="https://kit.fontawesome.com/cad0735f94.js" crossorigin="anonymous"></script>
+    </head>
+   <body>
+      <div class=nav-parent>
+         <nav class="navbar has-shadow" role=navigation aria-label="main navigation">
+            <button id=sidenav-toggle-btn class="button"> <i class="fas fa-bars"></i> </button>
+            <div id="headingWrap">
+               <h1 id=nav-heading>
+                <img src="https://7050356.app.netsuite.com/core/media/media.nl?id=2763&c=7050356&h=Wx3UvuroaacGTjba-Ka7M7fYPEGA882J1T3QH-hQ0gcbOLe_" alt="logo" />
+               </h1>
+            </div>
+         </nav>
+         <div id=sidenav-root>
+            <aside id=sidenav class=menu>
+               <div id="sidenav-content" >
+                  <p class=menu-label>Klaviyo
+                  <ul id="menuParent" class="menu-list"></ul>
+               </div>
+            </aside>
+            <div id=sidenav-back></div>
+            <div id=flex-parent-container>
+               <div class=content-container>
+                  <h1>Contents</h1>
+                  <h6 style=padding-left:4px>Updated: September 24, 2021</h6>
+                  <div class="content-wrap">
+                     <div class=content>
+                        <p>A basic place for reference is Klaviyo's <a href="https://help.klaviyo.com/hc/en-us" target="_blank">help Center</a>. We have had some issues however because their documentation is regularily out of date as of Sept, 2021.</p>
+
+                        <h2>Some helpful links for reference:</h2>
+                        <ul>
+                           <li><a href="https://help.klaviyo.com/hc/en-us/articles/115000751052-Track-and-Identify-API-Reference#tracking-events--server-side-10" target="_blank">Tracking API</a></li>
+                           <ul>
+                              <li><a href="https://help.klaviyo.com/hc/en-us/articles/115000751052-Track-and-Identify-API-Reference#tracking-events--javascript-9" target="_blank">Front End</a></li>
+                              <li><a href="https://help.klaviyo.com/hc/en-us/articles/115000751052-Track-and-Identify-API-Reference#tracking-events--server-side-10" target="_blank">Server Side</a></li>
+                           </ul>
+                           <li><a href="https://apidocs.klaviyo.com/reference/track-identify" target="_blank">More API tracking help</a></li>
+
+                        </ul>
+
+                        <p>Here is a code block example for front end tracking:
+                        <pre>
+<code>
+define("SuiteDynamics.Klaviyo_ViewedProduct.ViewedProductAPI", [], function (
+  KlaviyoTracker
+) {
+  "use strict";
+
+  return {
+    mountToApp: function mountToApp(container) {
+      var environment = container.getComponent("Environment");
+      var userProfile = container.getComponent("UserProfile");
+
+
+      userProfile.getUserProfile().then(function (profile) {
+        _learnq.push([
+          'identify',
+          {
+            '$email': profile.email,
+            '$first_name': profile.firstname,
+            '$last_name': profile.lastname
+          },
+        ]);
+      });
+
+      var addCartTracker = {
+        trackAddToCart: function (line) {
+          var cart_item = {
+            "$value": line.amount,
+            "AddedItemProductName": line.item.displayname,
+            "AddedItemPrice": line.amount,
+            "AddedItemQuantity": line.quantity,
+            "AddedItemImageURL": line.item.extras.itemimages_detail.urls[0].url,
+            "AddedItemURL": line.item.extras.keyMapping_url,
+            "CheckoutURL": "https://www.keepsakequilting.com/scs/checkout.ssp",
+            "AddedItemProductID": line.item.internalid,
+            "AddedItemSKU": line.item.itemid
+          };
+          _learnq.push(["track", "Added to Cart", cart_item]);
+          // console.log("cart tracked with this item:", cart_item);
+        },
+      };
+
+      environment.addTracker(addCartTracker);
+
+
+      var addPageViewTracker = {
+        trackPageview: function (line) {
+          var page = line.url;
+          _learnq.push(['track', 'Viewed Page', {url: page}]);
+          // console.log("addPageViewTracker activated with this url:", page);
+        },
+      };
+
+      environment.addTracker(addPageViewTracker);
+
+
+      var addProductViewTracker = {
+        trackProductView: function (line) {
+          var product = {
+            "$value": line.price,
+            "ProductName": line.name,
+            "Price": line.price,
+            "URL": line.urlComponent,
+            "ImageURL": line.thumbnail,
+            "SKU": line.sku,
+            "ProductID": line.internalId
+          };
+          _learnq.push(["track", "Viewed Product", product]);
+          // console.log("The following product was viewed:", product);
+        },
+      };
+
+      environment.addTracker(addProductViewTracker);
+
+
+      var addTransactionTracker = {
+        trackTransaction: function (line) {
+          var product = {
+            "$value": line.total,
+            "Confirmation Number": line.confirmationNumber,
+            "Sub Total": line.subTotal,
+            "Tax Total": line.taxTotal,
+            "Shipping Cost": line.shippingCost,
+            "Handling Cost": line.handlingCost,
+            "Total": line.total,
+            "Products": line.products,
+            "PromoCodes": line.promoCodes
+          };
+          _learnq.push(["track", "Transaction", product]);
+          // console.log("Successful Transaction:", product);
+
+          line.products.forEach((element,i) => {
+            setTimeout(
+                function(){
+                  trackPurchasedProducts(element);
+                }
+            , i * 750);
+          });
+
+          console.log(_learnq);
+        },
+      };
+
+      environment.addTracker(addTransactionTracker);     
+
+
+      function trackPurchasedProducts(item, index, arr) {
+        var byTheYard = item.name.includes('By The Yard'),
+            product = {};
+
+            if(byTheYard) {
+              product.$value = item.price * 2;
+              product.Price = '$' + item.price * 2;
+            } else {
+              product.$value = item.price;
+              product.Price = '$' + item.price;
+            }
+
+            product.Sku = item.sku;
+            product.Name = item.name;
+            product.Quantity = item.quantity;
+
+        _learnq.push(["track", "Purchased Product", product]);
+        
+        // console.log("Purchased Product:", product);
+      }
+
+    }
+  };
+});
+
+</code>
+                        </pre>
+                   
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+
+      <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+      <script defer src=https://7050356.app.netsuite.com/core/media/media.nl?id=2761&c=7050356&h=S26N57-wnBVa4xOXxxbNiNFcNyaD2E50oBg22pYUMz-1DC1x&mv=ktylm5e0&_xt=.js&fcts=20210924094845&whence=></script>
